@@ -82,3 +82,19 @@ m_list_s = sample(m_list,5)
 #=====================================================================================
 
 rtree_1 = generate_r_tree(m_list_s[1],dataset_mean)
+
+
+# A normal query with x1 and x2 in R scan all the rows in dataset.
+query_list = data.frame(key= 1:10,x1= sample(1:100000,5),x2 =  sample(1:100000,5))
+
+query_result = data.frame(NA)
+
+system.time(
+  for (i in 1:nrow(query_list)){
+    for(n in 1:nrow(dataset)){
+      if(max(query_list$x1[i],query_list$x2[i]) >= max(dataset$x1[n],dataset$x2[n])){
+        query_result[n,i]= paste(dataset$key[n],dataset$x1[n],dataset$x2[n])
+      }
+    }
+  }
+)
