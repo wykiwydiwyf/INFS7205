@@ -12,25 +12,6 @@ dataset = data.frame(key = dataset$V1[2:100001],x1 = dataset$V2[2:100001],y1 = d
 
 #generally look into dataset
 summary(dataset)
-
-#============How many times of query do you want to run?==============
-query_time = 10   #<======input value here
-query_list = data.frame(key= 1:query_time,x1= sample(1:100000,query_time),x2 =  sample(1:100000,query_time),y1= sample(1:100000,query_time),y2 =  sample(1:100000,query_time))
-
-query_list =data.frame(c(17840,18840,13971,14971),
-                       c(33451,34451,29693,30693),
-                       c(791,1791,2515,3515),
-                       c(81921,82921,94973,95973),
-                       c(75678,76678,53545,54545),
-                       c(90965,91965,11078,12078),
-                       c(69904,70904,67308,68308),
-                       c(7187,8187,56997,57997),
-                       c(34375,35375,60942,61942),
-                       c(57144,58144,24954,25954))
-
-
-colnames(query_list)= c("x1","x2","y1","y2")
-
 ###################FUNCTION-1##Function creates index for R-tree###############
 
 # if there is m branches in parent nodes
@@ -87,31 +68,45 @@ break_node = function(node){
 ###################FUNCTION-4##Function query Rtree###################
 rtree_query = function(mvalue,dataset_table1){
   # There is only one root in rtree, so we start it from branches after root.
-  node_access = paste(c(1,nrow(dataset_table1)),collapse = " ")
-  
+
+  rtree_result = NULL
   # root layer and first layer under root
-  for (j in nrow(query_list)) {
+  for (j in 1:nrow(query_list)) {
+    df = 0
+    node_access = paste(c(1,nrow(dataset_table1)),collapse = " ")
+
     for (i in (ncol(dataset_table1)-1)){
       for (n in 1:branch_index_test[length(branch_index_test)]){#every parent branch
-        if (max(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2])
-            && min(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2])
-            && max(query_list$y1[j],query_list$y2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4])
-            && min(query_list$y1[j],query_list$y2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4])
-            ){
-          node_access = rbind(node_access,paste(c(mvalue^(length(branch_index_test)-1)*(n-1)+1,min(nrow(dataset_table1),mvalue^(length(branch_index_test)-1)*n)),collapse = " "))
+        if ((min(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2])
+              &&  max(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2]))
+            || (min(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2])
+              &&  max(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[1],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[2]))
+            || (min(query_list$y1[j],query_list$y2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4])
+              &&  max(query_list$y1[j],query_list$y2[j])>=max(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4]))
+            || (min(query_list$y1[j],query_list$y2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4])
+              && max(query_list$y1[j],query_list$y2[j])<=min(break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[3],break_node(dataset_table1[mvalue^(length(branch_index_test)-1)*(n-1)+1,i])[4]))
+                ){
+        }else{node_access = rbind(node_access,paste(c(mvalue^(length(branch_index_test)-1)*(n-1)+1,min(nrow(dataset_table1),mvalue^(length(branch_index_test)-1)*n)),collapse = " "))
         }
       }
     }
     temp =2
-    temp1 = 1
     # layer above child nodes
     if (ncol(dataset_table1)>6){
       for (i in (ncol(dataset_table1)-2):5){
         for (n in temp:nrow(node_access)){
           for (k in seq(break_node(node_access[n])[1],break_node(node_access[n])[2],mvalue^(i-4))){
-            if (max(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2])
-                && min(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2])){
-              node_access = rbind(node_access,paste(c(k,min(nrow(dataset_table1),k+mvalue^(i-4)-1)),collapse = " "))
+            if ((min(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2])
+                    && max(query_list$x1[j],query_list$x2[j])>=max(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2]))
+                || (max(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2])
+                    && min(query_list$x1[j],query_list$x2[j])<=min(break_node(dataset_table1[k,i])[1],break_node(dataset_table1[k,i])[2]))
+                || (min(query_list$y1[j],query_list$y2[j])>=max(break_node(dataset_table1[k,i])[3],break_node(dataset_table1[k,i])[4])
+                    && max(query_list$y1[j],query_list$y2[j])>=max(break_node(dataset_table1[k,i])[3],break_node(dataset_table1[k,i])[4]))
+                || (max(query_list$y1[j],query_list$y2[j])<=min(break_node(dataset_table1[k,i])[3],break_node(dataset_table1[k,i])[4])
+                    && min(query_list$y1[j],query_list$y2[j])<=min(break_node(dataset_table1[k,i])[3],break_node(dataset_table1[k,i])[4]))
+            ){
+            }
+            else{node_access = rbind(node_access,paste(c(k,min(nrow(dataset_table1),k+mvalue^(i-4)-1)),collapse = " "))
             }
           }
         }
@@ -119,42 +114,49 @@ rtree_query = function(mvalue,dataset_table1){
       } 
     }
     # child nodes
+
+
     for (n in temp:nrow(node_access)){
       for (k in seq(break_node(node_access[n])[1],break_node(node_access[n])[2],1)){
-        if (max(query_list$x1[j],query_list$x2[j])<=max(dataset_table1[k,2],dataset_table1[k,3]) && min(query_list$x1[j],query_list$x2[j])>=min(dataset_table1[k,2],dataset_table1[k,3])){
+        if (max(query_list$x1[j],query_list$x2[j])>=dataset_table1[k,2]
+            && min(query_list$x1[j],query_list$x2[j])<=dataset_table1[k,2]
+            && max(query_list$y1[j],query_list$y2[j])>=dataset_table1[k,3]
+            && min(query_list$y1[j],query_list$y2[j])<=dataset_table1[k,3]){
           node_access = rbind(node_access,paste(k,collapse = " "))
-        }
-        else if (max(query_list$x1[j],query_list$x2[j])>=max(dataset_table1[k,2],dataset_table1[k,3]) && min(query_list$x1[j],query_list$x2[j])<=max(dataset_table1[k,2],dataset_table1[k,3])){
-          node_access = rbind(node_access,paste(k,collapse = " "))
-        }
-        else if (max(query_list$x1[j],query_list$x2[j])>=min(dataset_table1[k,2],dataset_table1[k,3]) && min(query_list$x1[j],query_list$x2[j])<=min(dataset_table1[k,2],dataset_table1[k,3])){
-          node_access = rbind(node_access,paste(k,collapse = " "))
-        }
-        else if (max(query_list$x1[j],query_list$x2[j])>=max(dataset_table1[k,2],dataset_table1[k,3]) && min(query_list$x1[j],query_list$x2[j])<=min(dataset_table1[k,2],dataset_table1[k,3])){
-          node_access = rbind(node_access,paste(k,collapse = " "))
+          df= df+1
         }
       }
-      temp = n+1
     }
-    rtree_result = as.numeric(node_access[temp:length(node_access)])
+    rtree_result = c(rtree_result,df)
     
-    return(rtree_result)
   }
+
+  return(rtree_result)
 }
+  
+
+#============Input the query do you want to run==============
 
 
-###################Create Rtree with m = 50 #######################
 
-library(NbClust)
+query_list =data.frame( x1 = c(17840,33451,791,81921,75678,90965,69904,7187,34375,57144), 
+                        x2 = c(18840,34451,1791,82921,76678,91965,70904,8187,35375,58144),
+                        y1 = c(13971,29693,2515,94973,53545,11078,67308,56997,60942,24954),
+                        y2 = c(14971,30693,3515,95973,54545,12078,68308,57997,61942,25954))
 
-test = kmeans(dataset,centers= 2000, iter.max = 50 )   
+
+
+###################Create Rtree with m = 10 #######################
+
+
+test = kmeans(dataset,centers= 10000, iter.max = 10 )   
 
 dataset_c = data.frame(dataset, order = test[["cluster"]])
 dataset_c = dataset_c[order(dataset_c$order), ]
 
-rtree = generate_r_tree(50,dataset_c)
+rtree = generate_r_tree(10,dataset_c)
 
-branch_index_test = generate_branch_index(50,dataset_c)
+branch_index_test = generate_branch_index(10,dataset_c)
 
 
 #======================================[QUERY WITHOUT R-TREE]=============================================
@@ -182,7 +184,7 @@ time_of_query = system.time(
     query_result= c(query_result,tem)
   }
 )
-query_result = query_result[which(complete.cases(query_result)),]
+
 cat("The query time for" , "query/queries is", time_of_query[3],"seconds")
 
 #======================================[QUERY WITH R-TREE]================================================
@@ -197,10 +199,6 @@ cat("The query time for" , "query/queries is", time_of_query[3],"seconds")
 
 
 
-time_of_rtree_query = system.time( for(i in 1){rtree_query_result = rtree_query(m_list_s[i],rtree_test)})
+time_of_rtree_query = system.time( for(i in 1){rtree_query_result = rtree_query(10,rtree)})
 
-cat("The query time for" , query_time, "query/queries is", time_of_rtree_query[3],"seconds")
-
-temp_set = rtree_test[rtree_query_result,(1:3)]
-rtree_result = temp_set[order(temp_set$key),]
-
+cat("The query time for query/queries is", time_of_rtree_query[3],"seconds")
